@@ -1,0 +1,31 @@
+{
+  "name": "Old Timer's (app container)",
+  "dockerComposeFile": ["../docker-compose.yml"],
+  "service": "app",
+  "workspaceFolder": "/app",
+  "shutdownAction": "none",
+  "forwardPorts": [3000, 5433, 8025],
+  "portsAttributes": {
+    "3000": { "label": "Next.js" },
+    "5433": { "label": "Postgres (host port)" },
+    "8025": { "label": "MailHog UI" }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "prisma.prisma",
+        "bradlc.vscode-tailwindcss",
+        "ms-playwright.playwright",
+        "vitest.explorer"
+      ],
+      "settings": {
+        "typescript.tsdk": "node_modules/typescript/lib",
+        "eslint.workingDirectories": [{ "mode": "auto" }],
+        "editor.formatOnSave": false
+      }
+    }
+  },
+  "remoteUser": "root"
+}

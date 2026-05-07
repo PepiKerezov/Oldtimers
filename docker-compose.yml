@@ -1,0 +1,112 @@
+services:
+  app:
+    build:
+      context: .
+      target: ${BUILD_TARGET:-dev}
+    image: old-timers/app:${IMAGE_TAG:-dev}
+    container_name: old-timers-app
+    env_file:
+      - .env.local
+    environment:
+      DATABASE_URL: postgresql://oldtimers:${DATABASE_PASSWORD}@db:5432/oldtimers?schema=public
+      BETTER_AUTH_URL: http://localhost:3000
+      WATCHPACK_POLLING: "true"
+      CHOKIDAR_USEPOLLING: "true"
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./:/app
+      - app_node_modules:/app/node_modules
+      - app_next:/app/.next
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000 >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+    networks:
+      - old-timers
+
+  db:
+    image: postgres:17-alpine
+    container_name: old-timers-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: oldtimers
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_DB: oldtimers
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U oldtimers -d oldtimers"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - old-timers
+
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    container_name: old-timers-mailhog
+    restart: unless-stopped
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    networks:
+      - old-timers
+
+  playwright:
+    build:
+      context: .
+      target: playwright
+    image: old-timers/playwright:dev
+    container_name: old-timers-playwright
+    ipc: host
+    environment:
+      PLAYWRIGHT_BASE_URL: http://app:3000
+      CI: "1"
+    volumes:
+      - ./:/app
+      - playwright_node_modules:/app/node_modules
+    depends_on:
+      app:
+        condition: service_healthy
+    networks:
+      - old-timers
+    profiles: ["test"]
+    command: ["pnpm", "exec", "playwright", "test"]
+
+  pgbackup:
+    image: postgres:17-alpine
+    container_name: old-timers-pgbackup
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGPASSWORD: ${DATABASE_PASSWORD}
+    volumes:
+      - ./backups:/backups
+    entrypoint: >
+      sh -c "while true; do
+        pg_dump -h db -U oldtimers -d oldtimers -F c -f /backups/oldtimers-$$(date +%Y%m%d-%H%M%S).dump;
+        find /backups -name 'oldtimers-*.dump' -mtime +14 -delete;
+        sleep 86400;
+      done"
+    profiles: ["prod"]
+    networks:
+      - old-timers
+
+volumes:
+  app_node_modules:
+  app_next:
+  playwright_node_modules:
+
+networks:
+  old-timers:
+    driver: bridge
