@@ -4,6 +4,19 @@ import { admin } from "better-auth/plugins";
 import { db } from "@/lib/db";
 import { env } from "@/lib/env";
 
+// Better Auth rejects auth requests whose Origin isn't trusted. Accept both the
+// apex and the www host of BETTER_AUTH_URL so a visitor on either one can log in
+// regardless of which domain Vercel served the page from.
+function authTrustedOrigins(base: string): string[] {
+  try {
+    const u = new URL(base);
+    const apex = u.host.replace(/^www\./, "");
+    return [`${u.protocol}//${apex}`, `${u.protocol}//www.${apex}`];
+  } catch {
+    return [base];
+  }
+}
+
 export const auth = betterAuth({
   appName: "Old Timer's",
   baseURL: env.BETTER_AUTH_URL,
@@ -32,7 +45,7 @@ export const auth = betterAuth({
       adminRoles: ["ADMIN"],
     }),
   ],
-  trustedOrigins: [env.BETTER_AUTH_URL],
+  trustedOrigins: authTrustedOrigins(env.BETTER_AUTH_URL),
 });
 
 export type Auth = typeof auth;

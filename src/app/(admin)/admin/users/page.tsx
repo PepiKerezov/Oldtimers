@@ -2,6 +2,7 @@ import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { UsersTable } from "@/components/admin/UsersTable";
+import { CreateAdminDialog } from "@/components/admin/CreateAdminDialog";
 
 export const metadata = { title: "Управление на администратори" };
 export const dynamic = "force-dynamic";
@@ -58,11 +59,14 @@ export default async function AdminUsersPage({
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl mb-1">Управление на администратори</h1>
-        <p className="text-foreground/70">
-          {users.length} потребителя — повишавай и понижавай ролите им.
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-3xl mb-1">Управление на администратори</h1>
+          <p className="text-foreground/70">
+            {users.length} потребителя — повишавай и понижавай ролите им.
+          </p>
+        </div>
+        <CreateAdminDialog />
       </div>
       <UsersTable
         users={rows}
