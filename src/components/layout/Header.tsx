@@ -2,6 +2,7 @@ import Link from "next/link";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { UserMenu } from "@/components/layout/UserMenu";
+import { MobileNav } from "@/components/layout/MobileNav";
 
 const NAV = [
   { href: "/", label: "Начало" },
@@ -16,7 +17,7 @@ export async function Header() {
 
   return (
     <header className="border-b border-border bg-background/85 backdrop-blur sticky top-0 z-30">
-      <div className="mx-auto max-w-6xl px-6 h-16 flex items-center justify-between gap-6">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 h-16 flex items-center justify-between gap-4 sm:gap-6">
         <Link href="/" className="flex items-center gap-2">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo-dark.svg" alt="Old Timer's" className="h-8 w-auto" />
@@ -42,6 +43,7 @@ export async function Header() {
               }}
             />
           ) : null}
+          <MobileNav items={NAV} />
         </div>
       </div>
     </header>

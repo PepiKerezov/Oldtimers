@@ -3,7 +3,7 @@ import Link from "next/link";
 export function Footer() {
   return (
     <footer className="border-t border-border bg-secondary/30 mt-12">
-      <div className="mx-auto max-w-6xl px-6 py-12 grid md:grid-cols-3 gap-8 text-sm">
+      <div className="mx-auto max-w-6xl px-6 py-12 grid md:grid-cols-2 gap-8 text-sm">
         <div>
           <div className="flex items-center gap-2 mb-4">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -28,16 +28,6 @@ export function Footer() {
             <li><Link href="/order" className="hover:text-primary">Поръчай</Link></li>
             <li><Link href="/about" className="hover:text-primary">За нас</Link></li>
             <li><Link href="/contact" className="hover:text-primary">Контакти</Link></li>
-          </ul>
-        </div>
-        <div>
-          <h4 className="text-sm uppercase tracking-[0.2em] text-foreground/60 mb-4">
-            Информация
-          </h4>
-          <ul className="space-y-2 text-foreground/80">
-            <li><Link href="/privacy" className="hover:text-primary">Политика за поверителност</Link></li>
-            <li><Link href="/terms" className="hover:text-primary">Общи условия</Link></li>
-            <li><Link href="/contact" className="hover:text-primary">За контакт с нас</Link></li>
           </ul>
         </div>
       </div>
