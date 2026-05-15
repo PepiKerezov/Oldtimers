@@ -14,8 +14,7 @@
     "prisma:studio": "prisma studio",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test",
-    "email:dev": "email dev --dir src/emails"
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -24,7 +23,6 @@
     "@prisma/client": "^7.8.0",
     "@radix-ui/react-label": "^2.1.8",
     "@radix-ui/react-slot": "^1.2.4",
-    "@react-email/components": "^1.0.12",
     "@tiptap/extension-image": "^3.22.5",
     "@tiptap/extension-link": "^3.22.5",
     "@tiptap/html": "^3.22.5",
@@ -43,7 +41,6 @@
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-hook-form": "^7.75.0",
-    "resend": "^6.12.3",
     "shadcn": "^4.7.0",
     "sharp": "^0.34.5",
     "sonner": "^2.0.7",

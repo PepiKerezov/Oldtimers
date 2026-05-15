@@ -9,10 +9,9 @@ respond with a quote. The site also publishes editorial articles (история
 
 - **Next.js 16** (App Router, src dir, TypeScript strict)
 - **Postgres 17** + **Prisma 7** (with `@prisma/adapter-pg` driver adapter)
-- **Better Auth 1.6** (email/password + Google OAuth, USER/ADMIN roles via the admin plugin)
+- **Better Auth 1.6** (email/password, USER/ADMIN roles via the admin plugin)
 - **Tailwind v4** + **shadcn/ui** (radix primitives, brand: cream / dusty pink / burgundy)
 - **TipTap 3** (rich-text editor for articles, with image upload via `sharp`)
-- **Resend** + **React Email** (transactional email)
 - **Cloudflare Turnstile** (anti-spam on public forms)
 - **Zod** + **react-hook-form** (form validation)
 - **Pino** (structured JSON logging)
@@ -27,12 +26,12 @@ all run inside containers.
 # 1. Copy env template, fill in real values
 cp .env.example .env.local
 
-# 2. Boot the whole stack (db + app + mailhog) with hot reload
+# 2. Boot the whole stack (db + app) with hot reload
 docker compose --env-file .env.local up
 ```
 
-App at <http://localhost:3000>, MailHog at <http://localhost:8025>. The `app`
-container runs `prisma migrate deploy` on start, then `pnpm dev`.
+App at <http://localhost:3000>. The `app` container runs
+`prisma migrate deploy` on start, then `pnpm dev`.
 
 > The dev `db` is exposed on host port `5433` (not the default 5432) to avoid
 > clashes with a locally-installed Postgres. Connect with
@@ -82,10 +81,21 @@ docker compose --profile test run --rm playwright \
 
 ## Bootstrapping the first admin
 
-There is no seed script. After the stack is up:
+There is no seed script and public sign-up is disabled
+(`emailAndPassword.disableSignUp` in [src/lib/auth.ts](./src/lib/auth.ts)).
+To create the first admin:
 
-1. Visit `/sign-up` and register normally (email/password or Google).
-2. Promote your row in the `User` table:
+1. Temporarily flip `disableSignUp` to `false` in [src/lib/auth.ts](./src/lib/auth.ts).
+2. Visit `/login` → there is no UI for sign-up (the form has been removed), so
+   POST to the Better Auth endpoint directly. For a one-off:
+
+   ```bash
+   curl -X POST http://localhost:3000/api/auth/sign-up/email \
+     -H "Content-Type: application/json" \
+     -d '{"email":"you@example.com","password":"choose-one","name":"You"}'
+   ```
+
+3. Promote the row in the `User` table:
 
    ```bash
    docker compose --env-file .env.local exec db \
@@ -93,8 +103,8 @@ There is no seed script. After the stack is up:
      -c "UPDATE \"User\" SET role='ADMIN' WHERE email='you@example.com';"
    ```
 
-3. Sign out and sign back in to refresh the session token.
-4. From `/admin/users`, every subsequent admin promotion/demotion is in-app.
+4. Re-set `disableSignUp` back to `true` and sign in at `/login`.
+5. From `/admin/users`, every subsequent admin promotion/demotion is in-app.
 
 ## Environment variables
 
@@ -106,12 +116,8 @@ See [.env.example](./.env.example). All required at runtime:
 | `DATABASE_PASSWORD` | Plain password, used by Docker compose |
 | `BETTER_AUTH_SECRET` | 32+ random bytes, base64 |
 | `BETTER_AUTH_URL` | Public origin (`http://localhost:3000` in dev) |
-| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google OAuth web client |
-| `RESEND_API_KEY` | `re_…` from resend.com |
-| `RESEND_FROM_EMAIL` | Sender (use `onboarding@resend.dev` until your domain is verified) |
 | `TURNSTILE_SITE_KEY` / `TURNSTILE_SECRET_KEY` | Cloudflare Turnstile |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Same site key, exposed to the browser |
-| `ADMIN_EMAIL` | Where new-order / new-message notifications go |
 | `SENTRY_DSN` / `NEXT_PUBLIC_SENTRY_DSN` | Optional |
 
 ## Scripts
@@ -134,11 +140,12 @@ prisma:studio     Open Prisma Studio
 
 - **Public:** `/`, `/articles`, `/articles/[slug]`, `/order`, `/order/success`,
   `/contact`, `/about`, `/privacy`, `/terms`
-- **Auth:** `/login`, `/sign-up`
+- **Auth:** `/login` (admin-only — public sign-up is disabled)
 - **Admin (ADMIN role required):** `/admin`, `/admin/articles`, `/admin/articles/new`,
   `/admin/articles/[id]/edit`, `/admin/orders`, `/admin/orders/[id]`,
-  `/admin/messages`, `/admin/users`
-- **API:** `/api/auth/[...all]` (Better Auth), `/api/upload` (image upload)
+  `/admin/messages`, `/admin/messages/[id]`, `/admin/users`
+- **API:** `/api/auth/[...all]` (Better Auth), `/api/upload` (admin image
+  ingest), `/api/images/[id]` (public image read)
 
 The `/admin/*` route group is gated by [src/proxy.ts](./src/proxy.ts) (Next.js 16's
 renamed middleware). **Every server action and admin page also re-checks `role === 'ADMIN'`**
@@ -176,15 +183,20 @@ docker compose --env-file .env.local exec -T db \
 
 ```
 prisma/                  schema and migrations
-src/app/                 Next App Router (public + (admin) + api/auth)
+scripts/                 one-off maintenance scripts (e.g. import-covers.mjs,
+                         the filesystem→DB image backfill)
+src/app/                 Next App Router (public + (admin) + api/*)
 src/components/          UI (layout, articles, forms, editor, admin, ui [shadcn])
 src/server/              "use server" actions (articles, orders, contact, users)
 src/lib/                 db client, auth, env, turnstile, rate-limit, logger, schemas
-src/emails/              React Email templates
-public/                  static assets (logo, hero, favicon, uploads/)
+public/                  static assets (logo, favicon)
 tests/unit/              Vitest unit tests
 tests/e2e/               Playwright e2e tests
 ```
+
+Uploaded images are **not** on disk — they live in the Postgres `Image` table
+(see [ARCHITECTURE.md](./ARCHITECTURE.md#image-upload)) and are served via
+`/api/images/[id]`.
 
 ## Notes
 

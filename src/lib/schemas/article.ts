@@ -12,7 +12,13 @@ export const articleInputSchema = z.object({
     .regex(/^[a-z0-9-]+$/, "Само малки латински букви, цифри и тирета"),
   excerpt: z.string().min(10, "Поне 10 знака").max(400),
   category: articleCategoryEnum,
-  coverImage: z.string().url().or(z.literal("")).optional(),
+  coverImage: z
+    .union([
+      z.string().url(),
+      z.string().regex(/^\/api\/images\/[a-z0-9]+$/i, "Невалиден път"),
+      z.literal(""),
+    ])
+    .optional(),
   content: z.unknown(),
 });
 

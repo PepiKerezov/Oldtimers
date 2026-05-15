@@ -13,12 +13,7 @@ export const auth = betterAuth({
     enabled: true,
     minPasswordLength: 8,
     autoSignIn: true,
-  },
-  socialProviders: {
-    google: {
-      clientId: env.GOOGLE_CLIENT_ID,
-      clientSecret: env.GOOGLE_CLIENT_SECRET,
-    },
+    disableSignUp: true,
   },
   session: {
     cookieCache: {
@@ -37,7 +32,7 @@ export const auth = betterAuth({
       adminRoles: ["ADMIN"],
     }),
   ],
-  trustedOrigins: ["http://localhost:3000"],
+  trustedOrigins: [env.BETTER_AUTH_URL],
 });
 
 export type Auth = typeof auth;

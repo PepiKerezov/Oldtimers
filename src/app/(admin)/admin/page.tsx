@@ -9,7 +9,7 @@ export default async function AdminDashboardPage() {
       db.article.count(),
       db.article.count({ where: { published: false } }),
       db.order.count(),
-      db.order.count({ where: { status: { in: ["NEW", "CONTACTED", "SOURCING", "QUOTED"] } } }),
+      db.order.count({ where: { status: { in: ["NEW", "FINDING"] } } }),
       db.contactSubmission.count(),
       db.contactSubmission.count({ where: { handled: false } }),
       db.user.count({ where: { role: "ADMIN" } }),

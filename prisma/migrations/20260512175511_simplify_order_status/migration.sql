@@ -1,0 +1,25 @@
+-- Simplify OrderStatus enum: NEW, FINDING, DONE, REFUSED.
+-- CONTACTED / SOURCING / QUOTED collapse to FINDING; COMPLETED -> DONE; CANCELLED -> REFUSED.
+
+ALTER TYPE "OrderStatus" RENAME TO "OrderStatus_old";
+
+CREATE TYPE "OrderStatus" AS ENUM ('NEW', 'FINDING', 'DONE', 'REFUSED');
+
+ALTER TABLE "Order" ALTER COLUMN "status" DROP DEFAULT;
+
+ALTER TABLE "Order"
+  ALTER COLUMN "status" TYPE "OrderStatus"
+  USING (
+    CASE "status"::text
+      WHEN 'NEW'       THEN 'NEW'
+      WHEN 'CONTACTED' THEN 'FINDING'
+      WHEN 'SOURCING'  THEN 'FINDING'
+      WHEN 'QUOTED'    THEN 'FINDING'
+      WHEN 'COMPLETED' THEN 'DONE'
+      WHEN 'CANCELLED' THEN 'REFUSED'
+    END
+  )::"OrderStatus";
+
+ALTER TABLE "Order" ALTER COLUMN "status" SET DEFAULT 'NEW';
+
+DROP TYPE "OrderStatus_old";

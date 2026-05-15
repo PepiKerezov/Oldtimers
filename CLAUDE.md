@@ -17,7 +17,7 @@ Playwright installed by design — all tooling lives inside containers. Prefix
 pnpm/prisma calls with `docker compose exec app …`.
 
 ```bash
-# Dev loop — boots db + app (hot reload) + mailhog
+# Dev loop — boots db + app (hot reload)
 docker compose --env-file .env.local up
 
 # Quality gates (run all three before claiming a phase complete)
@@ -68,9 +68,9 @@ in [Dockerfile](./Dockerfile) too.
 ### Auth (Better Auth + Prisma)
 
 - [src/lib/auth.ts](./src/lib/auth.ts) configures Better Auth with the Prisma
-  adapter, email/password, Google OAuth, and the `admin` plugin with
-  `defaultRole: "USER"` and `adminRoles: ["ADMIN"]`. Roles are **uppercase strings**
-  (not a Prisma enum) because Better Auth's admin plugin manages the column.
+  adapter, email/password, and the `admin` plugin with `defaultRole: "USER"`
+  and `adminRoles: ["ADMIN"]`. Roles are **uppercase strings** (not a Prisma
+  enum) because Better Auth's admin plugin manages the column.
 - [src/lib/session.ts](./src/lib/session.ts) exposes `requireAdmin()` /
   `requireUser()` / `getCurrentSession()`. Server actions and admin pages use
   these — they throw `"FORBIDDEN"` / `"UNAUTHENTICATED"` on failure.
@@ -79,9 +79,12 @@ in [Dockerfile](./Dockerfile) too.
   short-circuit redirects. **It is not a security boundary.** Every server action
   and every admin page must independently call `requireAdmin()`. This mirrors the
   Next 16 docs warning about CVE-2025-29927 (proxy bypass via spoofed RSC headers).
-- The first admin is bootstrapped manually: sign up normally, then
-  `UPDATE "User" SET role='ADMIN' WHERE email='…';` and re-login. There is no
-  seed script.
+- Public sign-up is disabled (`emailAndPassword.disableSignUp: true`). The
+  site has no user-facing accounts; authentication exists only so admins can
+  reach `/admin/*`. There is no seed script. To bootstrap the first admin,
+  temporarily flip `disableSignUp` to `false`, POST to
+  `/api/auth/sign-up/email`, `UPDATE "User" SET role='ADMIN' WHERE email='…';`,
+  then flip the flag back and re-login.
 
 ### Database (Prisma 7 with driver adapter)
 
@@ -90,10 +93,12 @@ in [Dockerfile](./Dockerfile) too.
 - [src/lib/db.ts](./src/lib/db.ts) constructs `PrismaClient` with
   `@prisma/adapter-pg` — Prisma 7's "client" engine **requires** an adapter or
   Accelerate URL. Don't go back to the bare `new PrismaClient()` form.
-- Six domain models split into Better Auth core (`User`, `Account`, `Session`,
-  `Verification`) and app data (`Article`, `Order`, `ContactSubmission`). The
-  `User` table carries the `role`, `banned`, `banReason`, `banExpires` columns
-  required by the admin plugin.
+- Seven models split into Better Auth core (`User`, `Account`, `Session`,
+  `Verification`) and app data (`Article`, `Order`, `ContactSubmission`,
+  `Image`). The `User` table carries the `role`, `banned`, `banReason`,
+  `banExpires` columns required by the admin plugin. `Image` holds uploaded
+  image bytes directly in Postgres (`Bytes` column) — uploads do not touch
+  the filesystem.
 
 ### Server actions (`src/server/`)
 
@@ -108,8 +113,7 @@ Pattern for any admin-only action:
 3. (Public actions only) Verify the Turnstile token and apply
    [`rateLimit()`](./src/lib/rate-limit.ts) keyed by IP.
 4. Mutate via `db`.
-5. Side-effects (email sending) are wrapped in try/catch so a failed email
-   never rolls back the DB write. Log via Pino, not `console.log`.
+5. Log via Pino, not `console.log`.
 6. Call `revalidatePath(...)` on every public route the change touches.
 
 ### Public form pipeline (`/order`, `/contact`)
@@ -120,8 +124,8 @@ Both share the same shape:
 [`components/forms/`](./src/components/forms/) using `react-hook-form` +
 `zodResolver` and Cloudflare Turnstile widget → server action in
 [`server/`](./src/server/) → `verifyTurnstileToken()` →
-`rateLimit("order:<ip>", 5, 1h)` → `db.create()` → React Email templates from
-[`emails/`](./src/emails/) sent through Resend.
+`rateLimit("order:<ip>", 5, 1h)` → `db.create()`. **No outbound email** —
+admins read submissions in `/admin/orders` and `/admin/messages` directly.
 
 `TURNSTILE_SECRET_KEY` is **bypassed in dev** when missing
 ([src/lib/turnstile.ts:9](./src/lib/turnstile.ts)) so forms still work offline.
@@ -136,7 +140,12 @@ Don't remove this fallback.
   **Keep the extension lists in sync** — a mismatch silently drops content.
 - Image uploads go through [`/api/upload`](./src/app/api/upload/route.ts):
   admin-gated, 5 MB cap, JPEG/PNG/WebP only, `sharp` resizes to 1920px max,
-  saved to `public/uploads/articles/<uuid>.<ext>`.
+  then the bytes are persisted as a row in the `Image` table. The route
+  returns `{ url: "/api/images/<id>" }`, which is what gets stored in TipTap
+  nodes and `Article.coverImage`. Public reads go through
+  [`/api/images/[id]`](./src/app/api/images/[id]/route.ts), which streams the
+  bytes with the original `mimeType` and a long `Cache-Control`. Nothing lives
+  on the local filesystem — `public/uploads/` is gone.
 - Slugs are auto-generated by [`slugify()`](./src/lib/articles.ts), which
   transliterates Cyrillic to Latin. `ensureUniqueSlug()` in
   [src/server/articles.ts](./src/server/articles.ts) appends `-2`, `-3`, …
@@ -150,8 +159,9 @@ Don't remove this fallback.
   (`/articles`, `/about`, `/order`, `/contact`, `/privacy`, `/terms`).
 - `src/app/(admin)/admin/layout.tsx` calls `auth.api.getSession()`, redirects
   non-admins, and renders the sidebar.
-- `/login` and `/sign-up` live at top level (not in `(public)`); they include
-  Header/Footer themselves.
+- `/login` lives at top level (not in `(public)`) and includes Header/Footer
+  itself. There is no public sign-up route — `/login` is an admin-only entry
+  point.
 
 ### Styling
 

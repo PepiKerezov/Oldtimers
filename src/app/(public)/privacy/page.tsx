@@ -26,8 +26,7 @@ export default function PrivacyPage() {
           предоставени през формите за поръчка и контакт.
         </li>
         <li>
-          <strong>Данни за акаунт:</strong> имейл и (за email/password
-          регистрация) хеширана парола; име и снимка от Google при OAuth вход.
+          <strong>Данни за акаунт:</strong> имейл и хеширана парола.
         </li>
         <li>
           <strong>Технически данни:</strong> IP адрес, тип браузър — за защита
@@ -55,9 +54,7 @@ export default function PrivacyPage() {
 
       <h2>Споделяне с трети страни</h2>
       <ul>
-        <li>Resend (изпращане на транзакционни имейли).</li>
         <li>Cloudflare Turnstile (защита на формите от спам).</li>
-        <li>Google (OAuth вход).</li>
         <li>Хостинг доставчик и услуги за резервно копие.</li>
       </ul>
 

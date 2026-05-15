@@ -46,7 +46,6 @@ type Row = {
 const PROVIDER_LABEL: Record<string, string> = {
   credential: "имейл",
   "email-password": "имейл",
-  google: "Google",
 };
 
 export function UsersTable({

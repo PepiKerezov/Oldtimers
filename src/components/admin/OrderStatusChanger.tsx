@@ -15,11 +15,9 @@ import {
 
 const LABELS: Record<OrderStatus, string> = {
   NEW: "Нова",
-  CONTACTED: "Свързах се",
-  SOURCING: "Търся",
-  QUOTED: "Оферта",
-  COMPLETED: "Изпълнена",
-  CANCELLED: "Отказана",
+  FINDING: "Търся",
+  DONE: "Изпълнена",
+  REFUSED: "Отказана",
 };
 
 export function OrderStatusChanger({

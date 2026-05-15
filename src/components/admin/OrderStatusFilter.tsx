@@ -24,11 +24,9 @@ export function OrderStatusFilter({ current }: { current: string }) {
       <SelectContent>
         <SelectItem value="all">Всички статуси</SelectItem>
         <SelectItem value="NEW">Нови</SelectItem>
-        <SelectItem value="CONTACTED">Свързах се</SelectItem>
-        <SelectItem value="SOURCING">Търся</SelectItem>
-        <SelectItem value="QUOTED">Оферта</SelectItem>
-        <SelectItem value="COMPLETED">Изпълнени</SelectItem>
-        <SelectItem value="CANCELLED">Отказани</SelectItem>
+        <SelectItem value="FINDING">Търся</SelectItem>
+        <SelectItem value="DONE">Изпълнени</SelectItem>
+        <SelectItem value="REFUSED">Отказани</SelectItem>
       </SelectContent>
     </Select>
   );

@@ -2,11 +2,8 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: "standalone",
-  images: {
-    remotePatterns: [
-      { protocol: "http", hostname: "localhost", port: "3000" },
-    ],
-  },
+  // No `images.remotePatterns` needed: uploaded images are served same-origin
+  // from /api/images/[id], so next/image treats them as local paths.
   experimental: {
     serverActions: {
       bodySizeLimit: "6mb",

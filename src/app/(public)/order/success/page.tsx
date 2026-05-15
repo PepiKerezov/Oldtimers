@@ -11,8 +11,7 @@ export default function OrderSuccessPage() {
       </p>
       <h1 className="text-4xl md:text-5xl mb-6">Получихме заявката ти</h1>
       <p className="text-foreground/80 mb-8 text-lg">
-        Изпратихме потвърждение на имейла ти. Ще ти отговорим лично с конкретна
-        наличност и цена в рамките на 1–2 работни дни.
+        Ще ти отговорим лично в рамките на 1–2 работни дни на имейл.
       </p>
       <div className="flex justify-center gap-3">
         <Button asChild>

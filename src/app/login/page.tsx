@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
@@ -15,7 +14,7 @@ export default async function LoginPage({
 }) {
   const session = await auth.api.getSession({ headers: await headers() });
   const params = await searchParams;
-  const redirectTo = params.redirect ?? "/";
+  const redirectTo = params.redirect ?? "/admin";
   if (session?.user) redirect(redirectTo);
 
   return (
@@ -25,18 +24,9 @@ export default async function LoginPage({
         <div className="w-full max-w-md bg-card border border-border rounded-2xl shadow-sm p-8">
           <h1 className="text-3xl mb-2">Вход</h1>
           <p className="text-sm text-foreground/70 mb-8">
-            Влез с имейл и парола или с Google акаунта си.
+            Достъп само за администратори.
           </p>
           <LoginForm redirectTo={redirectTo} />
-          <p className="mt-6 text-sm text-foreground/70 text-center">
-            Нямаш профил?{" "}
-            <Link
-              href={`/sign-up${params.redirect ? `?redirect=${encodeURIComponent(params.redirect)}` : ""}`}
-              className="text-primary underline"
-            >
-              Регистрирай се
-            </Link>
-          </p>
         </div>
       </main>
       <Footer />

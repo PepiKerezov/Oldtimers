@@ -1,18 +1,11 @@
 import { NextResponse } from "next/server";
-import { writeFile, mkdir } from "node:fs/promises";
-import path from "node:path";
 import sharp from "sharp";
-import { randomUUID } from "node:crypto";
 import { requireAdmin } from "@/lib/session";
+import { db } from "@/lib/db";
 import { logger } from "@/lib/logger";
 
 const MAX_BYTES = 5 * 1024 * 1024;
 const ALLOWED = new Set(["image/jpeg", "image/png", "image/webp"]);
-const EXT: Record<string, string> = {
-  "image/jpeg": "jpg",
-  "image/png": "png",
-  "image/webp": "webp",
-};
 
 export async function POST(req: Request) {
   try {
@@ -41,20 +34,24 @@ export async function POST(req: Request) {
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    const resized = await sharp(buffer)
+    const pipeline = sharp(buffer)
       .rotate()
-      .resize({ width: 1920, height: 1920, fit: "inside", withoutEnlargement: true })
-      .toBuffer();
+      .resize({ width: 1920, height: 1920, fit: "inside", withoutEnlargement: true });
+    const { data: resized, info } = await pipeline.toBuffer({ resolveWithObject: true });
 
-    const ext = EXT[file.type];
-    const id = randomUUID();
-    const dir = path.join(process.cwd(), "public", "uploads", "articles");
-    await mkdir(dir, { recursive: true });
-    const filename = `${id}.${ext}`;
-    await writeFile(path.join(dir, filename), resized);
+    const image = await db.image.create({
+      data: {
+        mimeType: file.type,
+        bytes: new Uint8Array(resized),
+        width: info.width,
+        height: info.height,
+        byteSize: resized.byteLength,
+      },
+      select: { id: true },
+    });
 
-    const url = `/uploads/articles/${filename}`;
-    logger.info({ filename, bytes: resized.byteLength }, "upload.image");
+    const url = `/api/images/${image.id}`;
+    logger.info({ id: image.id, bytes: resized.byteLength }, "upload.image");
     return NextResponse.json({ url });
   } catch (e) {
     logger.error({ err: (e as Error).message }, "upload.failed");

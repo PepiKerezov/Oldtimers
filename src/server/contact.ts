@@ -6,7 +6,6 @@ import { db } from "@/lib/db";
 import { contactInputSchema, type ContactInput } from "@/lib/schemas/contact";
 import { verifyTurnstileToken } from "@/lib/turnstile";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
-import { notifyAdminNewContact } from "@/lib/email";
 import { logger } from "@/lib/logger";
 import { fail, ok, type Result } from "@/lib/result";
 import { requireAdmin } from "@/lib/session";
@@ -33,22 +32,12 @@ export async function submitContact(
       data: {
         name: parsed.data.name,
         email: parsed.data.email,
+        subject: parsed.data.subject,
         message: parsed.data.message,
         ipAddress: ip,
       },
     });
     logger.info({ id: submission.id }, "contact.created");
-
-    try {
-      await notifyAdminNewContact({
-        id: submission.id,
-        name: submission.name,
-        email: submission.email,
-        message: submission.message,
-      });
-    } catch (e) {
-      logger.error({ err: (e as Error).message }, "contact.notifyAdmin.failed");
-    }
 
     return ok({ id: submission.id });
   } catch (e) {
@@ -69,6 +58,7 @@ export async function toggleContactHandled(
       data: { handled: !current.handled },
     });
     revalidatePath("/admin/messages");
+    revalidatePath(`/admin/messages/${id}`);
     return ok({ handled: updated.handled });
   } catch (e) {
     logger.error({ err: (e as Error).message }, "contact.toggle.failed");

@@ -6,7 +6,6 @@ import { db } from "@/lib/db";
 import { orderInputSchema, type OrderInput } from "@/lib/schemas/order";
 import { verifyTurnstileToken } from "@/lib/turnstile";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
-import { confirmOrderToCustomer, notifyAdminNewOrder } from "@/lib/email";
 import { logger } from "@/lib/logger";
 import { fail, ok, type Result } from "@/lib/result";
 import { requireAdmin } from "@/lib/session";
@@ -48,34 +47,6 @@ export async function submitOrder(
 
     logger.info({ orderId: order.id }, "order.created");
 
-    try {
-      await notifyAdminNewOrder({
-        id: order.id,
-        customerName: order.customerName,
-        email: order.email,
-        phone: order.phone,
-        carMake: order.carMake,
-        carModel: order.carModel,
-        carYear: order.carYear,
-        partDesc: order.partDesc,
-        notes: order.notes,
-      });
-    } catch (e) {
-      logger.error({ err: (e as Error).message }, "order.notifyAdmin.failed");
-    }
-    try {
-      await confirmOrderToCustomer({
-        id: order.id,
-        customerName: order.customerName,
-        email: order.email,
-        carMake: order.carMake,
-        carModel: order.carModel,
-        carYear: order.carYear,
-      });
-    } catch (e) {
-      logger.error({ err: (e as Error).message }, "order.confirmCustomer.failed");
-    }
-
     return ok({ id: order.id });
   } catch (e) {
     logger.error({ err: (e as Error).message }, "order.create.failed");
@@ -89,9 +60,20 @@ export async function updateOrderStatus(
 ): Promise<Result<null>> {
   try {
     await requireAdmin();
-    await db.order.update({ where: { id }, data: { status } });
+    const existing = await db.order.findUnique({ where: { id } });
+    if (!existing) return fail("Поръчката не е намерена");
+    if (existing.status === status) {
+      return ok(null);
+    }
+
+    await db.order.update({
+      where: { id },
+      data: { status },
+    });
+
     revalidatePath("/admin/orders");
     revalidatePath(`/admin/orders/${id}`);
+
     return ok(null);
   } catch (e) {
     logger.error({ err: (e as Error).message }, "order.updateStatus.failed");

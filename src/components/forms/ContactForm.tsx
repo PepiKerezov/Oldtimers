@@ -28,7 +28,13 @@ export function ContactForm() {
 
   const form = useForm<z.infer<typeof contactInputSchema>>({
     resolver: zodResolver(contactInputSchema),
-    defaultValues: { name: "", email: "", message: "", turnstileToken: "" },
+    defaultValues: {
+      name: "",
+      email: "",
+      subject: "",
+      message: "",
+      turnstileToken: "",
+    },
   });
 
   async function onSubmit(values: z.infer<typeof contactInputSchema>) {
@@ -86,12 +92,25 @@ export function ContactForm() {
         />
         <FormField
           control={form.control}
+          name="subject"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Тема</FormLabel>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
           name="message"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Съобщение</FormLabel>
               <FormControl>
-                <Textarea rows={5} {...field} />
+                <Textarea rows={8} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

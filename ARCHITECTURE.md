@@ -10,8 +10,10 @@ Old Timer's is a Bulgarian-language web app for sourcing hard-to-find parts for
 classic cars. Two audiences:
 
 - **Customers** describe a part through a public order form. The submission is
-  stored, an admin is emailed, and the customer receives a confirmation. Sourcing
-  and quoting happens off-platform; the app only manages the lead.
+  stored in the database; the customer sees an on-page confirmation
+  (`/order/success`). No email goes out in either direction — admins triage in
+  `/admin/orders`. Sourcing and quoting happens off-platform; the app only
+  manages the lead.
 - **Admins** manage articles (editorial content in four categories — новини,
   история, любопитни, съвети), triage incoming orders and contact messages, and
   promote/demote other users.
@@ -26,10 +28,9 @@ manual and tracked through `OrderStatus`.
 | --- | --- |
 | Runtime / framework | Next.js 16 App Router, React 19, TypeScript strict |
 | Database | Postgres 17 + Prisma 7 with `@prisma/adapter-pg` driver adapter |
-| Auth | Better Auth 1.6 (email/password + Google OAuth + admin plugin) |
+| Auth | Better Auth 1.6 (email/password + admin plugin) |
 | UI | Tailwind v4, shadcn/ui (radix primitives), brand tokens layered on top |
 | Editor | TipTap 3 (JSON storage, server-side render via `generateHTML`) |
-| Email | Resend + React Email (MailHog catches dev mail) |
 | Anti-spam | Cloudflare Turnstile (server-verified) + in-memory rate limit |
 | Validation | Zod everywhere, react-hook-form on the client |
 | Logging | Pino with PII redaction |
@@ -38,7 +39,7 @@ manual and tracked through `OrderStatus`.
 
 ## Domain model
 
-Six Prisma models in [prisma/schema.prisma](./prisma/schema.prisma), split into
+Seven Prisma models in [prisma/schema.prisma](./prisma/schema.prisma), split into
 two groups.
 
 **Better Auth core** — fully owned by the auth library, do not query for app
@@ -60,10 +61,14 @@ logic except through `auth.api.*`:
   (`novini | istoriya | lyubopitni | saveti`). `authorId` is `SetNull` on
   user delete so an admin's removal doesn't wipe their articles.
 - `Order` — an inbound part request. `status` enum tracks the manual sourcing
-  pipeline (`NEW → CONTACTED → SOURCING → QUOTED → COMPLETED | CANCELLED`).
+  pipeline (`NEW → FINDING → DONE | REFUSED`).
   IP is stored alongside the row for audit and for the rate-limiter.
-- `ContactSubmission` — a generic inbound message with a `handled` boolean
-  the admin toggles when triaged.
+- `ContactSubmission` — an inbound message (`name`, `email`, `subject`,
+  `message`) with a `handled` boolean the admin toggles when triaged.
+- `Image` — uploaded image bytes stored directly in Postgres (`bytes` is a
+  `Bytes` column, plus `mimeType`, `width`, `height`, `byteSize`). Written by
+  `/api/upload`, read by `/api/images/[id]`. Keeps uploads inside the database
+  backup boundary and avoids a separate object store.
 
 Indexes are placed for the queries the app actually runs: `(published,
 publishedAt)` for the public articles feed, `(status, createdAt)` for the
@@ -72,14 +77,18 @@ admin orders queue, `(handled, createdAt)` for the messages queue.
 ## Authentication and authorisation
 
 [src/lib/auth.ts](./src/lib/auth.ts) wires Better Auth with the Prisma adapter,
-email/password (8-char minimum, auto sign-in), Google OAuth, and the `admin`
-plugin (`defaultRole: "USER"`, `adminRoles: ["ADMIN"]`). Sessions live for 30
-days with a 24-hour rolling update window and a 5-minute cookie cache so most
-requests don't hit the database.
+email/password (8-char minimum, auto sign-in, `disableSignUp: true`), and the
+`admin` plugin (`defaultRole: "USER"`, `adminRoles: ["ADMIN"]`). Sessions live
+for 30 days with a 24-hour rolling update window and a 5-minute cookie cache so
+most requests don't hit the database.
 
-There is **no seed**. The first admin is bootstrapped manually: sign up
-normally, then `UPDATE "User" SET role='ADMIN' WHERE email='…';`, sign out, sign
-back in. After that, `/admin/users` handles every promotion.
+Public registration is intentionally off — the site has no user-facing
+accounts. Authentication exists only so admins can reach `/admin/*`.
+
+There is **no seed**. To bootstrap the first admin, temporarily flip
+`disableSignUp` to `false`, POST to `/api/auth/sign-up/email`,
+`UPDATE "User" SET role='ADMIN' WHERE email='…';`, then flip the flag back.
+After that, `/admin/users` handles every promotion.
 
 ### The two-layer authorisation pattern
 
@@ -128,10 +137,7 @@ The canonical pattern, from [src/server/orders.ts](./src/server/orders.ts):
    error.
 5. **For public actions:** `verifyTurnstileToken(token, ip)`.
 6. Mutate via `db`.
-7. Best-effort side effects (email sending) wrapped in their own try/catch so
-   a bounced admin email never rolls back the order. Errors are logged to
-   Pino, not returned.
-8. `revalidatePath(...)` for every public route the change touches
+7. `revalidatePath(...)` for every public route the change touches
    (homepage, `/articles`, the specific article page, etc.).
 
 ## Public form pipeline (`/order`, `/contact`)
@@ -148,9 +154,10 @@ verifyTurnstileToken()  ← Cloudflare bot check (server-side, with secret)
 rateLimit("order:<ip>", 5, 1h)
   ↓
 db.create(...)
-  ↓
-React Email template (src/emails/) → Resend
 ```
+
+Admins triage new orders / messages by visiting `/admin/orders` and
+`/admin/messages` directly — there is no outbound notification today.
 
 A few non-obvious details:
 
@@ -195,20 +202,26 @@ the slug unless you explicitly change the slug field.
 
 ### Image upload
 
-[`/api/upload`](./src/app/api/upload/route.ts) is the only API route besides
-auth. It is admin-gated, caps payloads at 5 MB, allows JPEG / PNG / WebP, and
-runs uploads through `sharp` to resize to 1920px max width. Files are stored
-under `public/uploads/articles/<uuid>.<ext>`. `public/uploads/` is gitignored —
-moving to S3/MinIO is a stretch goal but explicitly out of scope today.
+[`/api/upload`](./src/app/api/upload/route.ts) is admin-gated, caps payloads at
+5 MB, allows JPEG / PNG / WebP, and runs uploads through `sharp` to resize to
+1920px max width. The resized bytes are written as a row in the `Image` table
+(no filesystem writes); the route responds with `{ url: "/api/images/<id>" }`,
+which is stored in TipTap nodes and `Article.coverImage`.
+[`/api/images/[id]`](./src/app/api/images/[id]/route.ts) streams the bytes back
+out with the original `Content-Type` and `Cache-Control: public, max-age=31536000, immutable`
+(safe because rows are insert-only — each upload gets a fresh cuid; bytes for a
+given id never change). One-off
+backfill of pre-existing filesystem images into the table is in
+[scripts/import-covers.mjs](./scripts/import-covers.mjs).
 
 ## Routing layout
 
 The App Router structure is split across three groups:
 
 - **Top-level pages** — `src/app/page.tsx` (homepage, embeds Header/Footer
-  directly), `src/app/login/`, `src/app/sign-up/`. Login and sign-up are
-  intentionally outside the `(public)` group so they can render their own
-  centred layout.
+  directly) and `src/app/login/` (admin-only entry point). Login is
+  intentionally outside the `(public)` group so it can render its own
+  centred layout. There is no public sign-up route.
 - **`(public)` group** — `src/app/(public)/layout.tsx` wraps Header + Footer
   for `/articles`, `/articles/[slug]`, `/about`, `/order`,
   `/order/success`, `/contact`, `/privacy`, `/terms`.
@@ -216,31 +229,27 @@ The App Router structure is split across three groups:
   `requireAdmin` server-side, redirects on failure, and renders the sidebar.
   Pages: `/admin`, `/admin/articles`, `/admin/articles/new`,
   `/admin/articles/[id]/edit`, `/admin/orders`, `/admin/orders/[id]`,
-  `/admin/messages`, `/admin/users`.
+  `/admin/messages`, `/admin/messages/[id]`, `/admin/users`.
 
 API:
 
 - `/api/auth/[...all]` — Better Auth's catch-all handler via
-  `toNextJsHandler`. Owns sign-up, sign-in, OAuth callbacks, session, the
-  admin-plugin endpoints.
-- `/api/upload` — described above.
+  `toNextJsHandler`. Owns sign-in, session, and the admin-plugin endpoints.
+  Sign-up is disabled at the API level by `disableSignUp: true`.
+- `/api/upload` — described above (admin-only image ingest).
+- `/api/images/[id]` — public read of an `Image` row by id.
 
 ## Email
 
-[src/lib/email.ts](./src/lib/email.ts) wraps Resend. There are two outbound
-emails today:
-
-- `notifyAdminNewOrder` → `ADMIN_EMAIL` (template:
-  [NewOrderAdminEmail](./src/emails/NewOrderAdminEmail.tsx)).
-- `confirmOrderToCustomer` → the submitted address (template:
-  [OrderReceivedEmail](./src/emails/OrderReceivedEmail.tsx)).
-
-In dev, Resend can be replaced with SMTP-to-MailHog at
-`http://localhost:8025` for offline iteration on templates. The `mailhog`
-service in compose runs alongside `app` by default.
-
-Email failures are intentionally **non-fatal** — see "Server actions" above.
-A bounced admin notification logs an error and the order is still created.
+Outbound email is intentionally **not wired up** and was removed from the
+codebase. Orders and contact submissions are stored in the database and
+surfaced through the admin UI; neither the customer nor the admin receives a
+notification. There is no `src/lib/email.ts`, no Resend / nodemailer
+dependency, and no email-related env vars in [.env.example](./.env.example).
+If this is reintroduced later, plug it into
+[src/server/orders.ts](./src/server/orders.ts) and
+[src/server/contact.ts](./src/server/contact.ts) after `db.create`, wrapped in
+`try/catch` so a failed send never rolls back the row.
 
 ## Brand and typography
 
@@ -266,7 +275,7 @@ visual bug; non-Bulgarian devs may not.
 redaction and `pino-pretty` formatting in dev. Use `logger.info`/`logger.error`
 exclusively — `console.log` is banned in committed code (the lint config
 enforces this). Standard event names follow `<resource>.<action>[.<state>]`,
-e.g. `order.created`, `article.update.failed`, `order.notifyAdmin.failed`.
+e.g. `order.created`, `article.update.failed`.
 
 `SENTRY_DSN` and `NEXT_PUBLIC_SENTRY_DSN` env vars are wired in but Sentry
 init code is intentionally minimal — it picks up errors thrown from
@@ -275,7 +284,7 @@ try/catches.
 
 ## Container topology
 
-[docker-compose.yml](./docker-compose.yml) defines four services:
+[docker-compose.yml](./docker-compose.yml) defines three services:
 
 - **app** — Next.js dev server with hot reload (or the prod standalone build,
   controlled by the `BUILD_TARGET` arg). Bind-mounted source, named volume
@@ -286,7 +295,6 @@ try/catches.
 - **db** — Postgres 17 alpine, exposed on host port **5433** (not 5432) to
   avoid colliding with a locally installed Postgres. Data persists in
   `./pgdata/`.
-- **mailhog** — local SMTP catcher, web UI on `:8025`. Always runs in dev.
 - **playwright** — separate image
   (`mcr.microsoft.com/playwright:v1.59.1-noble`, browsers preinstalled),
   built from a dedicated stage in the [Dockerfile](./Dockerfile). Runs only
@@ -310,8 +318,11 @@ These are not "to do" — they are explicit non-goals:
 
 - **Cloud deployment, custom domain, HTTPS termination.** The Docker setup is
   for local development only.
-- **Resend domain verification.** Senders use the Resend sandbox domain.
-- **S3 / MinIO uploads.** Uploaded images live on the local filesystem.
+- **Transactional email.** No outbound mail is sent on order or contact
+  submission. Admins triage everything in `/admin/*` directly.
+- **S3 / MinIO uploads.** Uploaded images live in Postgres (`Image` table),
+  not in object storage. This keeps backups single-source but means the DB
+  grows with image volume; revisit if that ever becomes load-bearing.
 - **i18n.** The app is Bulgarian-only by design; identifiers and logs are
   English by convention.
 - **Distributed rate limiting.** In-memory, single-process. Scaling out

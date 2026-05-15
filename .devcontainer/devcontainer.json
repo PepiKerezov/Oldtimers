@@ -4,11 +4,10 @@
   "service": "app",
   "workspaceFolder": "/app",
   "shutdownAction": "none",
-  "forwardPorts": [3000, 5433, 8025],
+  "forwardPorts": [3000, 5433],
   "portsAttributes": {
     "3000": { "label": "Next.js" },
-    "5433": { "label": "Postgres (host port)" },
-    "8025": { "label": "MailHog UI" }
+    "5433": { "label": "Postgres (host port)" }
   },
   "customizations": {
     "vscode": {

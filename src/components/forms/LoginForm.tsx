@@ -25,7 +25,7 @@ const schema = z.object({
 
 export function LoginForm({ redirectTo }: { redirectTo: string }) {
   const router = useRouter();
-  const [pending, setPending] = useState<"email" | "google" | null>(null);
+  const [pending, setPending] = useState(false);
 
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
@@ -33,12 +33,12 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
   });
 
   async function onSubmit(values: z.infer<typeof schema>) {
-    setPending("email");
+    setPending(true);
     const { error } = await authClient.signIn.email({
       email: values.email,
       password: values.password,
     });
-    setPending(null);
+    setPending(false);
     if (error) {
       toast.error(error.message ?? "Грешка при вход");
       return;
@@ -48,65 +48,39 @@ export function LoginForm({ redirectTo }: { redirectTo: string }) {
     router.refresh();
   }
 
-  async function handleGoogle() {
-    setPending("google");
-    await authClient.signIn.social({
-      provider: "google",
-      callbackURL: redirectTo,
-    });
-  }
-
   return (
-    <div className="space-y-4">
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Имейл</FormLabel>
-                <FormControl>
-                  <Input type="email" autoComplete="email" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="password"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Парола</FormLabel>
-                <FormControl>
-                  <Input type="password" autoComplete="current-password" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <Button type="submit" className="w-full" disabled={pending !== null}>
-            {pending === "email" ? "Влизане…" : "Вход с имейл"}
-          </Button>
-        </form>
-      </Form>
-      <div className="relative my-6 flex items-center">
-        <div className="flex-grow border-t border-border" />
-        <span className="mx-3 text-xs uppercase tracking-wider text-foreground/60">
-          или
-        </span>
-        <div className="flex-grow border-t border-border" />
-      </div>
-      <Button
-        type="button"
-        variant="outline"
-        className="w-full"
-        onClick={handleGoogle}
-        disabled={pending !== null}
-      >
-        {pending === "google" ? "Препращане…" : "Вход с Google"}
-      </Button>
-    </div>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Имейл</FormLabel>
+              <FormControl>
+                <Input type="email" autoComplete="email" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="password"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Парола</FormLabel>
+              <FormControl>
+                <Input type="password" autoComplete="current-password" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <Button type="submit" className="w-full" disabled={pending}>
+          {pending ? "Влизане…" : "Вход"}
+        </Button>
+      </form>
+    </Form>
   );
 }

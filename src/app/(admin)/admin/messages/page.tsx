@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { db } from "@/lib/db";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -32,7 +33,7 @@ export default async function AdminMessagesPage() {
             <TableRow>
               <TableHead>Получено</TableHead>
               <TableHead>От</TableHead>
-              <TableHead>Съобщение</TableHead>
+              <TableHead>Тема</TableHead>
               <TableHead>Статус</TableHead>
               <TableHead className="text-right">Действие</TableHead>
             </TableRow>
@@ -63,8 +64,13 @@ export default async function AdminMessagesPage() {
                       </a>
                     </p>
                   </TableCell>
-                  <TableCell className="max-w-md text-sm whitespace-pre-wrap text-foreground/80">
-                    {m.message}
+                  <TableCell className="max-w-md">
+                    <Link
+                      href={`/admin/messages/${m.id}`}
+                      className="font-medium underline-offset-2 hover:underline hover:text-primary"
+                    >
+                      {m.subject}
+                    </Link>
                   </TableCell>
                   <TableCell>
                     {m.handled ? (

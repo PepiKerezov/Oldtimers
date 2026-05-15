@@ -37,7 +37,6 @@ export default async function ArticlePage({
   const { slug } = await params;
   const article = await db.article.findUnique({
     where: { slug },
-    include: { author: { select: { name: true, email: true } } },
   });
   if (!article || !article.published) notFound();
 
@@ -65,12 +64,6 @@ export default async function ArticlePage({
         <p className="mt-4 text-lg text-foreground/75">{article.excerpt}</p>
         <div className="mt-6 text-sm text-foreground/60 flex flex-wrap gap-3">
           {date && <span>{date}</span>}
-          {article.author?.name && (
-            <>
-              <span>•</span>
-              <span>{article.author.name}</span>
-            </>
-          )}
         </div>
       </header>
       {article.coverImage && (

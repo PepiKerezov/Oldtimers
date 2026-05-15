@@ -12,11 +12,9 @@ datasource db {
 
 enum OrderStatus {
   NEW
-  CONTACTED
-  SOURCING
-  QUOTED
-  COMPLETED
-  CANCELLED
+  FINDING
+  DONE
+  REFUSED
 }
 
 enum ArticleCategory {
@@ -140,10 +138,23 @@ model Order {
   @@index([email])
 }
 
+model Image {
+  id        String   @id @default(cuid())
+  mimeType  String
+  bytes     Bytes
+  width     Int?
+  height    Int?
+  byteSize  Int
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
 model ContactSubmission {
   id         String   @id @default(cuid())
   name       String
   email      String
+  subject    String
   message    String
   handled    Boolean  @default(false)
   ipAddress  String?

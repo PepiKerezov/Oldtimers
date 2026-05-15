@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
-import { Button } from "@/components/ui/button";
 import { UserMenu } from "@/components/layout/UserMenu";
 
 const NAV = [
@@ -42,16 +41,7 @@ export async function Header() {
                 role: (session.user as { role?: string }).role ?? "USER",
               }}
             />
-          ) : (
-            <>
-              <Button asChild variant="ghost" size="sm">
-                <Link href="/login">Вход</Link>
-              </Button>
-              <Button asChild size="sm">
-                <Link href="/sign-up">Регистрация</Link>
-              </Button>
-            </>
-          )}
+          ) : null}
         </div>
       </div>
     </header>

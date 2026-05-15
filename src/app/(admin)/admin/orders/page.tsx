@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { OrderStatus, type Prisma } from "@prisma/client";
-import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -10,35 +9,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { OrderStatusFilter } from "@/components/admin/OrderStatusFilter";
+import { OrderStatusChanger } from "@/components/admin/OrderStatusChanger";
 
 export const metadata = { title: "Поръчки" };
 export const dynamic = "force-dynamic";
-
-const STATUS_LABEL: Record<OrderStatus, string> = {
-  NEW: "Нова",
-  CONTACTED: "Свързах се",
-  SOURCING: "Търся",
-  QUOTED: "Оферта",
-  COMPLETED: "Изпълнена",
-  CANCELLED: "Отказана",
-};
-
-const STATUS_VARIANT: Record<OrderStatus, "default" | "secondary" | "outline" | "destructive"> = {
-  NEW: "default",
-  CONTACTED: "secondary",
-  SOURCING: "secondary",
-  QUOTED: "secondary",
-  COMPLETED: "outline",
-  CANCELLED: "destructive",
-};
 
 export default async function AdminOrdersPage({
   searchParams,
@@ -111,9 +86,7 @@ export default async function AdminOrdersPage({
                     {o.partDesc}
                   </TableCell>
                   <TableCell>
-                    <Badge variant={STATUS_VARIANT[o.status]}>
-                      {STATUS_LABEL[o.status]}
-                    </Badge>
+                    <OrderStatusChanger id={o.id} current={o.status} />
                   </TableCell>
                 </TableRow>
               ))
@@ -124,5 +97,3 @@ export default async function AdminOrdersPage({
     </div>
   );
 }
-
-export { STATUS_LABEL };
