@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { ArticleForm } from "@/components/forms/ArticleForm";
+import { ArticleEditActions } from "@/components/admin/ArticleEditActions";
 
 export const metadata = { title: "Редакция на статия" };
 
@@ -15,7 +16,10 @@ export default async function EditArticlePage({
 
   return (
     <div className="space-y-6 max-w-3xl">
-      <h1 className="text-3xl">Редакция: {article.title}</h1>
+      <div className="flex items-start justify-between gap-4">
+        <h1 className="text-3xl">Редакция: {article.title}</h1>
+        <ArticleEditActions id={article.id} published={article.published} />
+      </div>
       <ArticleForm
         mode="edit"
         initial={{
