@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Old Timer's — Части за класически автомобили</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700;9..144,800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-warm: #f4ece5;
+    --bg-hero: #e8d8cc;
+    --bg-card: #ffffff;
+    --bg-soft: #ede1d6;
+    --rose: #d9c0b3;
+    --burgundy: #5a1a1a;
+    --burgundy-soft: #7a2a2a;
+    --ink: #2a1f1c;
+    --ink-soft: #6b5a52;
+    --line: #e3d4c6;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg-warm);
+    color: var(--ink);
+    min-height: 100vh;
+  }
+
+  /* ===== NAVBAR ===== */
+  .navbar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(244, 236, 229, 0.92);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .nav-inner {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 18px 40px;
+    display: flex;
+    align-items: center;
+    gap: 40px;
+  }
+
+  .logo {
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--burgundy);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .logo span { color: var(--ink); }
+
+  .nav-links {
+    display: flex;
+    gap: 28px;
+    list-style: none;
+    flex: 1;
+  }
+
+  .nav-links a {
+    color: var(--ink);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    transition: color 0.2s ease;
+    position: relative;
+  }
+
+  .nav-links a:hover { color: var(--burgundy); }
+
+  .nav-right {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+  }
+
+  .lang-switch {
+    display: flex;
+    gap: 4px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  .lang-switch button {
+    background: none;
+    border: none;
+    color: var(--ink-soft);
+    cursor: pointer;
+    padding: 4px 6px;
+    font-family: inherit;
+    font-size: inherit;
+    transition: color 0.2s ease;
+  }
+
+  .lang-switch button.active { color: var(--burgundy); font-weight: 600; }
+  .lang-switch button:hover { color: var(--burgundy); }
+  .lang-switch .divider { color: var(--line); }
+
+  .nav-cta {
+    background: var(--burgundy);
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 999px;
+    text-decoration: none;
+    font-size: 13.5px;
+    font-weight: 500;
+    transition: background 0.2s ease;
+  }
+
+  .nav-cta:hover { background: var(--burgundy-soft); }
+
+  /* ===== SOCIAL SIDEBAR ===== */
+  .social-sidebar {
+    position: fixed;
+    right: 24px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    z-index: 50;
+  }
+
+  .social-sidebar a {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--burgundy);
+    text-decoration: none;
+    transition: all 0.25s ease;
+  }
+
+  .social-sidebar a:hover {
+    background: var(--burgundy);
+    color: #fff;
+    transform: translateX(-4px);
+  }
+
+  .social-sidebar svg { width: 18px; height: 18px; }
+
+  /* ===== HERO ===== */
+  .hero {
+    background: linear-gradient(135deg, #ead8c8 0%, #d9bdac 60%, #c9a795 100%);
+    padding: 120px 40px 140px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 80% 30%, rgba(255,255,255,0.3) 0%, transparent 50%);
+    pointer-events: none;
+  }
+
+  .hero-inner {
+    max-width: 1280px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+  }
+
+  .hero-eyebrow {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.5);
+    border: 1px solid rgba(90, 26, 26, 0.15);
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink);
+    font-weight: 500;
+    margin-bottom: 28px;
+  }
+
+  .hero h1 {
+    font-family: 'Fraunces', serif;
+    font-size: 64px;
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: -0.025em;
+    color: var(--ink);
+    max-width: 720px;
+    margin-bottom: 22px;
+  }
+
+  .hero-sub {
+    font-size: 17px;
+    color: var(--ink);
+    opacity: 0.78;
+    max-width: 540px;
+    line-height: 1.55;
+    margin-bottom: 36px;
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .btn-primary {
+    background: var(--burgundy);
+    color: #fff;
+    padding: 14px 28px;
+    border-radius: 999px;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background 0.2s ease, transform 0.2s ease;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  .btn-primary:hover { background: var(--burgundy-soft); transform: translateY(-1px); }
+
+  .btn-secondary {
+    background: rgba(255, 255, 255, 0.6);
+    color: var(--ink);
+    padding: 14px 28px;
+    border-radius: 999px;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    border: 1px solid rgba(42, 31, 28, 0.15);
+    transition: background 0.2s ease;
+  }
+
+  .btn-secondary:hover { background: rgba(255, 255, 255, 0.85); }
+
+  /* ===== SECTIONS WRAPPER ===== */
+  .sections {
+    padding: 100px 40px;
+  }
+
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .section-label {
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--burgundy);
+    font-weight: 500;
+    margin-bottom: 16px;
+  }
+
+  .section-title {
+    font-family: 'Fraunces', serif;
+    font-size: 44px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    margin-bottom: 12px;
+  }
+
+  .section-subtitle {
+    font-size: 16px;
+    color: var(--ink-soft);
+    margin-bottom: 48px;
+    max-width: 560px;
+    line-height: 1.5;
+  }
+
+  /* ===== FEATURES ===== */
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    margin-bottom: 100px;
+  }
+
+  .feature-card {
+    background: var(--bg-card);
+    border-radius: 18px;
+    padding: 32px 26px;
+    border: 1px solid var(--line);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+  }
+
+  .feature-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 18px 40px -20px rgba(90, 26, 26, 0.18);
+  }
+
+  .feature-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: var(--bg-soft);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 22px;
+    color: var(--burgundy);
+  }
+
+  .feature-icon svg { width: 24px; height: 24px; }
+
+  .feature-card h3 {
+    font-family: 'Fraunces', serif;
+    font-size: 19px;
+    font-weight: 600;
+    line-height: 1.25;
+    margin-bottom: 10px;
+    color: var(--ink);
+  }
+
+  .feature-card p {
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--ink-soft);
+  }
+
+  /* ===== PROCESS ===== */
+  .process-header {
+    text-align: center;
+    margin-bottom: 56px;
+  }
+
+  .process-header .section-label { display: inline-block; }
+  .process-header .section-title { font-size: 40px; }
+
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    position: relative;
+  }
+
+  .step {
+    background: var(--bg-card);
+    border-radius: 18px;
+    padding: 30px 26px;
+    border: 1px solid var(--line);
+    position: relative;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+  }
+
+  .step:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 18px 40px -20px rgba(90, 26, 26, 0.18);
+  }
+
+  .step-number {
+    font-family: 'Fraunces', serif;
+    font-size: 56px;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--rose);
+    margin-bottom: 18px;
+    display: block;
+  }
+
+  .step h4 {
+    font-family: 'Fraunces', serif;
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 1.3;
+    margin-bottom: 8px;
+    color: var(--ink);
+  }
+
+  .step p {
+    font-size: 13.5px;
+    line-height: 1.55;
+    color: var(--ink-soft);
+  }
+
+  .step-arrow {
+    position: absolute;
+    top: 52px;
+    right: -22px;
+    width: 28px;
+    height: 28px;
+    z-index: 2;
+    color: var(--burgundy);
+    background: var(--bg-warm);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .step:last-child .step-arrow { display: none; }
+
+  .cta-row {
+    margin-top: 56px;
+    text-align: center;
+  }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 1100px) {
+    .nav-links { gap: 20px; }
+    .hero h1 { font-size: 52px; }
+  }
+
+  @media (max-width: 960px) {
+    .nav-links { display: none; }
+    .features-grid, .steps {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .step-arrow { display: none; }
+    .section-title { font-size: 34px; }
+    .hero h1 { font-size: 42px; }
+    .hero { padding: 80px 24px 100px; }
+    .sections { padding: 70px 24px; }
+    .social-sidebar { right: 12px; }
+    .social-sidebar a { width: 36px; height: 36px; }
+  }
+
+  @media (max-width: 520px) {
+    .nav-inner { padding: 14px 20px; gap: 16px; }
+    .features-grid, .steps { grid-template-columns: 1fr; }
+    .hero h1 { font-size: 34px; }
+    .social-sidebar { display: none; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- ===== НАВБАР ===== -->
+  <nav class="navbar">
+    <div class="nav-inner">
+      <a href="#" class="logo">Old Timer<span>'s</span></a>
+      <ul class="nav-links">
+        <li><a href="#about">За нас</a></li>
+        <li><a href="#service">Услуга</a></li>
+        <li><a href="#articles">Статии</a></li>
+        <li><a href="#reviews">Отзиви</a></li>
+        <li><a href="#contact">Контакти</a></li>
+      </ul>
+      <div class="nav-right">
+        <div class="lang-switch">
+          <button>EN</button>
+          <span class="divider">/</span>
+          <button class="active">BG</button>
+        </div>
+        <a href="#order" class="nav-cta">Направи поръчка</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ===== СОЦИАЛНИ МРЕЖИ ===== -->
+  <div class="social-sidebar">
+    <a href="#" aria-label="Facebook">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M13.5 21v-8h2.7l.4-3.1h-3.1V7.9c0-.9.25-1.5 1.55-1.5H17V3.6c-.3-.04-1.3-.13-2.5-.13-2.5 0-4.2 1.5-4.2 4.3v2.13H7.6V13h2.7v8h3.2z"/></svg>
+    </a>
+    <a href="#" aria-label="Instagram">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="18" height="18" rx="5"/>
+        <circle cx="12" cy="12" r="4"/>
+        <circle cx="17.5" cy="6.5" r="1" fill="currentColor"/>
+      </svg>
+    </a>
+    <a href="#" aria-label="TikTok">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16.5 3h-2.7v12.2c0 1.3-1.1 2.4-2.4 2.4-1.3 0-2.4-1.1-2.4-2.4 0-1.3 1.1-2.4 2.4-2.4.27 0 .52.05.76.12V10.2a5.2 5.2 0 0 0-.76-.06c-2.85 0-5.16 2.31-5.16 5.16 0 2.85 2.31 5.16 5.16 5.16 2.85 0 5.16-2.31 5.16-5.16V9.1c1.07.78 2.4 1.24 3.84 1.24V7.7c-2.21 0-4-1.79-4-4z"/></svg>
+    </a>
+  </div>
+
+  <!-- ===== HERO ===== -->
+  <section class="hero">
+    <div class="hero-inner">
+      <span class="hero-eyebrow">Old Timer's</span>
+      <h1>Търсиш части за твоя ретро автомобил?</h1>
+      <p class="hero-sub">Намираме качествени части, редки компоненти и помощ за реставрация на класически автомобили — на едно място.</p>
+      <div class="hero-actions">
+        <a href="#order" class="btn-primary">Направи поръчка</a>
+        <a href="#service" class="btn-secondary">Научи повече</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== СЕКЦИИ ===== -->
+  <section class="sections" id="service">
+    <div class="container">
+
+      <!-- СПЕЦИАЛИЗИРАНО ОБСЛУЖВАНЕ -->
+      <div class="section-label">Направи поръчка</div>
+      <h2 class="section-title">Специализирано обслужване</h2>
+      <p class="section-subtitle">Всичко, от което се нуждае твоят класически автомобил — от хора, които наистина разбират от тези коли.</p>
+
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="7"/>
+              <path d="m20 20-3.5-3.5"/>
+            </svg>
+          </div>
+          <h3>Търсим части специално за твоя автомобил</h3>
+          <p>Откриваме конкретната част за твоя модел — без догадки и без универсални заместители.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="8" r="4"/>
+              <path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/>
+            </svg>
+          </div>
+          <h3>Индивидуален подход</h3>
+          <p>Лична консултация — опознаваме твоя проект и адаптираме всяка препоръка спрямо него.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 6 9 17l-5-5"/>
+            </svg>
+          </div>
+          <h3>Гаранция за качество с VIN</h3>
+          <p>Всяка част се проверява по VIN номера — това, което получаваш, точно пасва.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 7h11v9H3z"/>
+              <path d="M14 10h4l3 3v3h-7"/>
+              <circle cx="7" cy="18" r="2"/>
+              <circle cx="17" cy="18" r="2"/>
+            </svg>
+          </div>
+          <h3>Улеснена доставка без грижи</h3>
+          <p>Доставка до врата в цяла България. Ние се грижим за логистиката — ти за колата.</p>
+        </div>
+      </div>
+
+      <!-- ЛЕСЕН ПРОЦЕС -->
+      <div class="process-header">
+        <div class="section-label">Как работи</div>
+        <h2 class="section-title">Лесен процес</h2>
+      </div>
+
+      <div class="steps">
+        <div class="step">
+          <span class="step-number">01</span>
+          <h4>Направи запитване</h4>
+          <p>Разкажи ни за твоя автомобил и частта, която търсиш.</p>
+          <div class="step-arrow">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 12h14M13 6l6 6-6 6"/>
+            </svg>
+          </div>
+        </div>
+
+        <div class="step">
+          <span class="step-number">02</span>
+          <h4>Консултация</h4>
+          <p>Обсъждаме варианти, съвместимост и какво наистина подхожда на твоя проект.</p>
+          <div class="step-arrow">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 12h14M13 6l6 6-6 6"/>
+            </svg>
+          </div>
+        </div>
+
+        <div class="step">
+          <span class="step-number">03</span>
+          <h4>Оферта с гаранция</h4>
+          <p>Ясна цена за проверена част — качеството гарантирано писмено.</p>
+          <div class="step-arrow">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 12h14M13 6l6 6-6 6"/>
+            </svg>
+          </div>
+        </div>
+
+        <div class="step">
+          <span class="step-number">04</span>
+          <h4>Улеснена доставка</h4>
+          <p>Изпращаме директно до теб. Това е всичко — готов си.</p>
+        </div>
+      </div>
+
+      <div class="cta-row">
+        <a href="#order" class="btn-primary">Направи поръчка</a>
+      </div>
+
+    </div>
+  </section>
+
+</body>
+</html>

@@ -2,7 +2,10 @@ import Link from "next/link";
 import { db } from "@/lib/db";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { SocialSidebar } from "@/components/layout/SocialSidebar";
 import { ArticleGrid } from "@/components/articles/ArticleGrid";
+import { ServicesGrid } from "@/components/home/ServicesGrid";
+import { ProcessSteps } from "@/components/home/ProcessSteps";
 import { Button } from "@/components/ui/button";
 
 export const revalidate = 60;
@@ -32,6 +35,7 @@ export default async function HomePage() {
   return (
     <>
       <Header />
+      <SocialSidebar />
       <main className="flex-1">
         <section className="bg-[var(--color-burgundy-deep)] text-[var(--color-cream)]">
           <div className="mx-auto max-w-6xl px-6 py-20 md:py-28">
@@ -60,6 +64,9 @@ export default async function HomePage() {
             </div>
           </div>
         </section>
+
+        <ServicesGrid />
+        <ProcessSteps />
 
         <section className="mx-auto max-w-6xl px-6 py-16 md:py-20 grid md:grid-cols-2 gap-6">
           <article className="rounded-3xl bg-[var(--color-pink-50)] p-8 md:p-10">
